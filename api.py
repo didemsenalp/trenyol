@@ -7,12 +7,12 @@ import uuid
 
 app = Flask(__name__)
 
-app.secret_key="tepsiburada"
+app.secret_key="trenyol123"
 
 app.config["MYSQL_HOST"] = "localhost"
 app.config["MYSQL_USER"] = "root"
 app.config["MYSQL_PASSWORD"] = ""
-app.config["MYSQL_DB"] = "tepsiburada"
+app.config["MYSQL_DB"] = "trenyol"
 app.config["MYSQL_CURSORCLASS"] = "DictCursor"
 
 mysql = MySQL(app)
@@ -41,15 +41,16 @@ def validation_uye_ol(register_email):
         return get_anka_result("eposta adresi sisteme kayitli.",True,register_email)
     
 @app.route("/UyeOlApi",methods = ["POST"])
+
 def uye_ol_api():
     request_data = request.get_json()
-    register_name = request_data("name")
-    register_email = request_data("email")
-    register_username = request_data("username")
-    register_password = request_data("password")
+    register_name = request_data["name"]
+    register_email = request_data["email"]
+    register_username = request_data["username"]
+    register_password = request_data["password"]
 
 
-    if validation_uye_ol()["data"] == {None}:
+    if validation_uye_ol(register_email)["data"] == {None}:
 
         token = token_olustur()
 
@@ -65,6 +66,8 @@ def uye_ol_api():
             mysql.connection.commit()
         else:
             return validation_token(token) 
+    else:
+        return get_anka_result()["message"]
 
 def validation_token(token):
     find_user_with_token_query = "Select * From users where token = %s"
@@ -75,3 +78,4 @@ def validation_token(token):
     else:
         return get_anka_result("token kayitli",False,token)
 
+app.run(debug=True)
