@@ -123,16 +123,17 @@ def giris_yap_api():
     entered_email = request_data["email"]
     entered_password = request_data["password"]
 
-    if validate_giris_yap(entered_email,entered_password)["success"] == True:
-        if check_email_and_password(entered_email,entered_password)["success"] == True:
-            return check_email_and_password(entered_email,entered_password)
+    validate_giris_yap_inputları_result = validate_giris_yap_inputları(entered_email,entered_password)
+    if validate_giris_yap_inputları_result["success"] == True:
+        checkMailPasswordResult = check_email_and_password(entered_email,entered_password)
+        if checkMailPasswordResult["success"] == True:
+            return checkMailPasswordResult
         else:
-            return check_email_and_password(entered_email,entered_password)
+            return checkMailPasswordResult
     else:
-        return validate_giris_yap(entered_email,entered_password)
+        return validate_giris_yap_inputları_result
     
-def validate_giris_yap(email,password):
-
+def validate_giris_yap_inputları(email,password):
     if email == None or email == "":
         return get_anka_result("Eposta adresi bos",False,None)
     if password == None or password == "":
@@ -283,10 +284,10 @@ def sepeti_goruntule():
             musteri_id = get_musterid_with_by_token(token)["data"]
             if musterinin_sepeti_var_mi(musteri_id)["success"] == True:
                 musteri_sepet_id = musterinin_sepeti_var_mi(musteri_id)["data"]
-                if sepetteki_urunleri_getir(musteri_sepet_id)["success"] == True:
-                    return sepetteki_urunleri_getir(musteri_sepet_id)
+                if musterinin_sepetteki_urunlerini_getir(musteri_sepet_id)["success"] == True:
+                    return musterinin_sepetteki_urunlerini_getir(musteri_id,musteri_sepet_id)
                 else:
-                    return sepetteki_urunleri_getir(musteri_sepet_id)
+                    return musterinin_sepetteki_urunlerini_getir(musteri_id,musteri_sepet_id)
             else:
                 return musterinin_sepeti_var_mi(musteri_id)
         else:
@@ -294,8 +295,8 @@ def sepeti_goruntule():
     else:
         return validate_token(token)
 
-def sepetteki_urunleri_getir(sepet_id):
-    query_sepetteki_urunleri_getir = "Select * From cart_item where cart_id = %s"
+def musterinin_sepetteki_urunlerini_getir(musteri_id,sepet_id):
+    query_sepetteki_urunleri_getir = "Select * From cart_item where musteri_id = %s AND cart_id = %s"
 
     sepetteki_urunleri_getir_result = g.cursor.execute(query_sepetteki_urunleri_getir,(sepet_id,))
 
@@ -303,7 +304,7 @@ def sepetteki_urunleri_getir(sepet_id):
 
     if sepetteki_urunleri_getir_result > 0:
 
-        sepet_tutari = sepet_tutari_hesapla(sepet_id)["data"]
+        sepet_tutari = musterinin_sepet_tutarini_getir(musteri_id)["data"]
 
         return get_anka_result('Sepetteki urunler goruntulendi',True,["urunler:",cart_item,["sepet_tutari:",sepet_tutari]])
         
@@ -311,10 +312,10 @@ def sepetteki_urunleri_getir(sepet_id):
         
         return get_anka_result('Sepette urun bulunamadi',False,None)
     
-def sepet_tutari_hesapla(sepet_id):
-    query_musteri_sepeti = "Select * From cart_item where cart_id = %s"
+def musterinin_sepet_tutarini_getir(musteri_id):
+    query_musteri_sepeti = "Select * From cart_item where musteri_id = %s"
 
-    result_musteri_sepeti = g.cursor.execute(query_musteri_sepeti,(sepet_id,))
+    result_musteri_sepeti = g.cursor.execute(query_musteri_sepeti,(musteri_id,))
 
     if result_musteri_sepeti > 0 :
 
@@ -358,12 +359,102 @@ def kart_bilgisi_gir():
     if validate_token(token)["success"] == True:
         if get_musterid_with_by_token(token)["success"] == True:
             musteri_id = get_musterid_with_by_token(token)["data"]
-    
+            if validate_card_number_and_balance(musteri_id,credi_card_number)["success"] == True:
+                return validate_card_number_and_balance(musteri_id,credi_card_number)
+            else:
+                return kredi_kart_bilgileri_kaydet(musteri_id,credi_card_number)
+        else:
+            return get_musterid_with_by_token(token)
+    else:
+        return validate_token(token)
  
-def validate_card_number(card_number):
+def validate_card_number_and_balance(musteri_id,card_number):
     if card_number == None or card_number == "" or type(card_number) == str:
-        return get_anka_result('Card number yanlis',False,None)
-    return get_anka_result('Urun id dogru',True,card_number)
+        return get_anka_result('Kart numarasini dogru giriniz.',False,None)
+    else:
+        musterinin_kredi_karti_bu_mu_result = musterinin_kredi_karti_bu_mu(musteri_id,card_number)
+        if musterinin_kredi_karti_bu_mu_result["success"] == True:
+            return musterinin_kredi_karti_bu_mu_result
+        else:
+            return musterinin_kredi_karti_bu_mu_result
+
+def musterinin_kredi_karti_bu_mu(musteri_id,credi_card_number):
+    musterinin_kayitli_karti_bu_mu_query = "Select * From card_information where musteri_id = %s AND card_number = %s"
+
+    musterinin_kayitli_karti_bu_mu_result = g.cursor.execute(musterinin_kayitli_karti_bu_mu_query,(musteri_id,credi_card_number))
+    if musterinin_kayitli_karti_bu_mu_result > 0 :
+        
+        return get_anka_result('Kullanicinin karti bu',True,credi_card_number)
+    else:
+        return get_anka_result('Kullanicinin kayitli karti bu degil',False,None)
+
+def kredi_kart_bilgileri_kaydet(musteri_id,credi_card_number):
+    
+    credi_card_balance = random.randint(100,10000)
+
+
+    kart_kaydet_query = "Insert into card_information(musteri_id,card_number,card_balance) VALUES(%s,%s,%s)"
+
+    kart_kaydet_query_result = g.cursor.execute(kart_kaydet_query,(musteri_id,credi_card_number,credi_card_balance))
+    mysql.connection.commit()
+
+    if kart_kaydet_query_result > 0:
+        return get_anka_result('Kart bilgileri kaydedildi',True,None)
+    else:
+        return get_anka_result('Kart bilgileri kaydedilemedi',False,None)
+
+@app.route("/OdemeYap",methods = ["GET"])
+def odeme_yap():
+    token = request.headers.get('token')
+    request_data = request.get_json()
+    credi_card_number = request_data["card_number"]
+
+    validate_token_result = validate_token(token)
+    if validate_token_result["success"] == True:
+        get_musterid_with_by_token_result = get_musterid_with_by_token(token)
+        if get_musterid_with_by_token_result["success"] == True:
+            musteri_id = get_musterid_with_by_token(token)["data"]
+            validate_card_number_and_balance_result = validate_card_number_and_balance(musteri_id,credi_card_number)
+            if validate_card_number_and_balance_result["success"] == True:
+                credi_card_number = validate_card_number_and_balance_result["data"]
+                musterinin_sepet_tutarini_getir_result = musterinin_sepet_tutarini_getir(musteri_id)
+                musteri_sepet_tutari = musterinin_sepet_tutarini_getir_result["data"]
+                odeme_kart_bakiye_guncellemesi_result = odeme_kart_bakiye_guncellemesi(musteri_id,credi_card_number,musteri_sepet_tutari)
+
+                return odeme_kart_bakiye_guncellemesi_result
+            else:
+                return validate_card_number_and_balance_result
+        else:
+            return get_musterid_with_by_token_result
+    else:
+        return validate_token_result
+
+    
+    
+
+def odeme_kart_bakiye_guncellemesi(musteri_id,credi_card_number,musteri_sepet_tutari):
+        kredi_karti_bakiye_query = "Select * From card_information where musteri_id = %s AND card_number = %s"
+
+        kredi_karti_bakiye_result = g.cursor.execute(kredi_karti_bakiye_query,(musteri_id,credi_card_number))
+
+
+        credi_card_data = g.cursor.fetchone()
+        card_balance = credi_card_data["card_balance"]
+
+        if card_balance >= musteri_sepet_tutari:
+            yeni_bakiye = card_balance - musteri_sepet_tutari
+
+            kredi_karti_bakiye_guncelle_query = "Update card_information set card_balance = %s"
+
+            kredi_karti_bakiye_guncelle_result = g.cursor.execute(kredi_karti_bakiye_guncelle_query,(yeni_bakiye,))
+
+            mysql.connection.commit()
+
+            return get_anka_result("Odeme yapildi",True,None)
+        else:
+            return get_anka_result("Odeme yapilamadi",False,None)
+
+
 
 
 app.run(debug=True)
