@@ -23,7 +23,9 @@ def before_request():
     g.cursor = g.conn.cursor()
 
 def get_anka_result(message,success,data):
-    return {"message":message,"success":success,"data":data}
+    return {"message":message,
+            "success":success,
+            "data":data}
 
 def token_olustur():
    token = str(random.randint(1,100))
@@ -282,9 +284,7 @@ def sepeti_goruntule():
             if musterinin_sepeti_var_mi(musteri_id)["success"] == True:
                 musteri_sepet_id = musterinin_sepeti_var_mi(musteri_id)["data"]
                 if sepetteki_urunleri_getir(musteri_sepet_id)["success"] == True:
-                    sepetteki_urunler_listesi = list(sepetteki_urunleri_getir(musteri_sepet_id)["data"])
-                    sepet_tutari = sepet_tutari_hesapla(musteri_sepet_id)["data"]
-                    return get_anka_result("Sepet tutari hesaplandi.",True,sepetteki_urunler_listesi)
+                    return sepetteki_urunleri_getir(musteri_sepet_id)
                 else:
                     return sepetteki_urunleri_getir(musteri_sepet_id)
             else:
@@ -303,11 +303,13 @@ def sepetteki_urunleri_getir(sepet_id):
 
     if sepetteki_urunleri_getir_result > 0:
 
-        return get_anka_result('Sepetteki urunler goruntulendi',True,cart_item)
+        sepet_tutari = sepet_tutari_hesapla(sepet_id)["data"]
+
+        return get_anka_result('Sepetteki urunler goruntulendi',True,["urunler:",cart_item,["sepet_tutari:",sepet_tutari]])
         
     else:
         
-        return get_anka_result('Sepet bulunamadi',False,None)
+        return get_anka_result('Sepette urun bulunamadi',False,None)
     
 def sepet_tutari_hesapla(sepet_id):
     query_musteri_sepeti = "Select * From cart_item where cart_id = %s"
@@ -324,7 +326,7 @@ def sepet_tutari_hesapla(sepet_id):
 
             get_product_price_metodu = get_product_price(product_id)
 
-            product_price = get_product_price_metodu["product_price"]
+            product_price = get_product_price_metodu["data"]
 
             sepet_tutari += product_price
         
