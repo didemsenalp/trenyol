@@ -349,5 +349,21 @@ def get_product_price(product_id):
     
     return get_anka_result("Urun fiyati bulunamadi",False,None)
 
+@app.route("/KartBilgisiGir",methods = ["GET"])
+def kart_bilgisi_gir():
+    token = request.headers.get('token')
+    request_data = request.get_json()
+    credi_card_number = request_data["card_number"]
+    
+    if validate_token(token)["success"] == True:
+        if get_musterid_with_by_token(token)["success"] == True:
+            musteri_id = get_musterid_with_by_token(token)["data"]
+    
+ 
+def validate_card_number(card_number):
+    if card_number == None or card_number == "" or type(card_number) == str:
+        return get_anka_result('Card number yanlis',False,None)
+    return get_anka_result('Urun id dogru',True,card_number)
+
 
 app.run(debug=True)
