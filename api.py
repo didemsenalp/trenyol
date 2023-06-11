@@ -54,26 +54,32 @@ def uye_ol_api():
     register_username = request_data["username"]
     register_password = request_data["password"]
 
-    if validate_uye_ol(register_name,register_email,register_username,register_password)["success"] == True:
-        if check_email(register_email)["success"] == True:
+    validate_uye_ol_result = validate_uye_ol(register_name,register_email,register_username,register_password)
+    check_email_result = check_email(register_email)
+    check_token_result = check_token(token)
+    uye_ol_result = uye_ol(register_name,register_email,register_username,register_password,token,gu_id)
+
+
+    if validate_uye_ol_result["success"] == True:
+        if check_email_result["success"] == True:
 
             token = token_olustur()
 
-            if check_token(token)["success"] == True:
+            if check_token_result["success"] == True:
 
                 gu_id = gu_id_olustur()
                 
-                if uye_ol(register_name,register_email,register_username,register_password,token,gu_id)["success"] == True:
+                if uye_ol_result["success"] == True:
 
-                    return uye_ol(register_name,register_email,register_username,register_password,token,gu_id)
+                    return uye_ol_result
                 else:
-                    return uye_ol(register_name,register_email,register_username,register_password,token,gu_id)
+                    return uye_ol_result
             else:
-                return check_token(token)
+                return check_token_result
         else:
-            return check_email(register_email)
+            return check_email_result
     else:
-        return validate_uye_ol(register_name,register_email,register_username,register_password)
+        return validate_uye_ol_result
 
 def validate_uye_ol(name,email,username,password):
     request_data = request.get_json()
@@ -125,11 +131,11 @@ def giris_yap_api():
 
     validate_giris_yap_inputları_result = validate_giris_yap_inputları(entered_email,entered_password)
     if validate_giris_yap_inputları_result["success"] == True:
-        checkMailPasswordResult = check_email_and_password(entered_email,entered_password)
-        if checkMailPasswordResult["success"] == True:
-            return checkMailPasswordResult
+        check_mail_password_result = check_email_and_password(entered_email,entered_password)
+        if check_mail_password_result["success"] == True:
+            return check_mail_password_result
         else:
-            return checkMailPasswordResult
+            return check_mail_password_result
     else:
         return validate_giris_yap_inputları_result
     
@@ -189,13 +195,20 @@ def sepete_urun_ekle():
     token = request.headers.get('token')
     request_data = request.get_json()
     product_id = request_data["product_id"]
-    if validate_token(token)["success"] == True:
-        if get_musterid_with_by_token(token)["success"] == True:
+
+    validate_token_result = validate_token(token)
+    get_musterid_with_by_token_result = get_musterid_with_by_token(token)
+    validate_product_id_result = validate_product_id(product_id)
+    urun_varmi_result = urun_varmi(product_id)
+    musterinin_sepeti_var_mi_result = musterinin_sepeti_var_mi(musteri_id)
+
+    if validate_token_result["success"] == True:
+        if get_musterid_with_by_token_result["success"] == True:
             musteri_id = get_musterid_with_by_token(token)["data"]
-            if validate_product_id(product_id)["success"] == True:
-                if urun_varmi(product_id)["success"] == True:
-                    if musterinin_sepeti_var_mi(musteri_id)["success"] == True:
-                        musteri_sepet_id= musterinin_sepeti_var_mi(musteri_id)["data"]
+            if validate_product_id_result["success"] == True:
+                if urun_varmi_result["success"] == True:
+                    if musterinin_sepeti_var_mi_result["success"] == True:
+                        musteri_sepet_id= musterinin_sepeti_var_mi_result["data"]
                         sepete_urun_ekle_query = "Insert into cart_item(musteri_id,product_id,cart_id) VALUES(%s,%s,%s)"
                         sepete_urun_ekle_result = g.cursor.execute(sepete_urun_ekle_query,(musteri_id,product_id,musteri_sepet_id))
                         if sepete_urun_ekle_result >0:
@@ -213,13 +226,13 @@ def sepete_urun_ekle():
                         else:
                             return get_anka_result('Urun sepete eklenemedi',False,None)
                 else:
-                    return urun_varmi(product_id)
+                    return urun_varmi_result
             else:
-                return validate_product_id(product_id)
+                return validate_product_id_result
         else:
-            return get_musterid_with_by_token(token)
+            return get_musterid_with_by_token_result
     else:
-        return validate_token(token)
+        return validate_token_result
     
 def validate_token(token):
     if token == None or token == "":
@@ -278,22 +291,28 @@ def sepet_olustur(musteri_id):
 @app.route("/SepetiGoruntuleApi",methods = ["GET"])
 def sepeti_goruntule():
     token = request.headers.get('token')
+
+    validate_token_result = validate_token(token)
+    get_musterid_with_by_token_result = get_musterid_with_by_token(token)
+    musterinin_sepeti_var_mi_result = musterinin_sepeti_var_mi(musteri_id)
+    musterinin_sepetteki_urunlerini_getir_result =musterinin_sepetteki_urunlerini_getir(musteri_sepet_id)
+
     
-    if validate_token(token)["success"] == True:
-        if get_musterid_with_by_token(token)["success"] == True:
-            musteri_id = get_musterid_with_by_token(token)["data"]
-            if musterinin_sepeti_var_mi(musteri_id)["success"] == True:
-                musteri_sepet_id = musterinin_sepeti_var_mi(musteri_id)["data"]
-                if musterinin_sepetteki_urunlerini_getir(musteri_sepet_id)["success"] == True:
-                    return musterinin_sepetteki_urunlerini_getir(musteri_id,musteri_sepet_id)
+    if validate_token_result["success"] == True:
+        if get_musterid_with_by_token_result["success"] == True:
+            musteri_id = get_musterid_with_by_token_result["data"]
+            if musterinin_sepeti_var_mi_result["success"] == True:
+                musteri_sepet_id = musterinin_sepeti_var_mi_result["data"]
+                if musterinin_sepetteki_urunlerini_getir_result["success"] == True:
+                    return musterinin_sepetteki_urunlerini_getir_result
                 else:
-                    return musterinin_sepetteki_urunlerini_getir(musteri_id,musteri_sepet_id)
+                    return musterinin_sepetteki_urunlerini_getir_result
             else:
-                return musterinin_sepeti_var_mi(musteri_id)
+                return musterinin_sepeti_var_mi_result
         else:
-            return get_musterid_with_by_token(token)
+            return get_musterid_with_by_token_result
     else:
-        return validate_token(token)
+        return validate_token_result
 
 def musterinin_sepetteki_urunlerini_getir(musteri_id,sepet_id):
     query_sepetteki_urunleri_getir = "Select * From cart_item where musteri_id = %s AND cart_id = %s"
@@ -355,18 +374,23 @@ def kart_bilgisi_gir():
     token = request.headers.get('token')
     request_data = request.get_json()
     credi_card_number = request_data["card_number"]
+
+    validate_token_result = validate_token(token)
+    get_musterid_with_by_token_result = get_musterid_with_by_token(token)
+    validate_card_number_and_balance_result = validate_card_number_and_balance(musteri_id,credi_card_number)
+    kredi_kart_bilgileri_kaydet_result = kredi_kart_bilgileri_kaydet(musteri_id,credi_card_number)
     
-    if validate_token(token)["success"] == True:
-        if get_musterid_with_by_token(token)["success"] == True:
-            musteri_id = get_musterid_with_by_token(token)["data"]
-            if validate_card_number_and_balance(musteri_id,credi_card_number)["success"] == True:
-                return validate_card_number_and_balance(musteri_id,credi_card_number)
+    if validate_token_result["success"] == True:
+        if get_musterid_with_by_token_result["success"] == True:
+            musteri_id = get_musterid_with_by_token_result["data"]
+            if validate_card_number_and_balance_result["success"] == True:
+                return validate_card_number_and_balance_result
             else:
-                return kredi_kart_bilgileri_kaydet(musteri_id,credi_card_number)
+                return kredi_kart_bilgileri_kaydet_result
         else:
-            return get_musterid_with_by_token(token)
+            return get_musterid_with_by_token_result
     else:
-        return validate_token(token)
+        return validate_token_result
  
 def validate_card_number_and_balance(musteri_id,card_number):
     if card_number == None or card_number == "" or type(card_number) == str:
