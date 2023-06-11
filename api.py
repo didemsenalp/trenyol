@@ -371,21 +371,22 @@ def get_product_price(product_id):
 
 @app.route("/KartBilgisiGir",methods = ["GET"])
 def kart_bilgisi_gir():
+    
     token = request.headers.get('token')
     request_data = request.get_json()
     credi_card_number = request_data["card_number"]
-
-    validate_token_result = validate_token(token)
-    get_musterid_with_by_token_result = get_musterid_with_by_token(token)
-    validate_card_number_and_balance_result = validate_card_number_and_balance(musteri_id,credi_card_number)
-    kredi_kart_bilgileri_kaydet_result = kredi_kart_bilgileri_kaydet(musteri_id,credi_card_number)
     
+    
+    validate_token_result = validate_token(token)
     if validate_token_result["success"] == True:
+        get_musterid_with_by_token_result = get_musterid_with_by_token(token)
         if get_musterid_with_by_token_result["success"] == True:
             musteri_id = get_musterid_with_by_token_result["data"]
+            validate_card_number_and_balance_result = validate_card_number_and_balance(musteri_id,credi_card_number)
             if validate_card_number_and_balance_result["success"] == True:
                 return validate_card_number_and_balance_result
             else:
+                kredi_kart_bilgileri_kaydet_result = kredi_kart_bilgileri_kaydet(musteri_id,credi_card_number)
                 return kredi_kart_bilgileri_kaydet_result
         else:
             return get_musterid_with_by_token_result
@@ -393,7 +394,7 @@ def kart_bilgisi_gir():
         return validate_token_result
  
 def validate_card_number_and_balance(musteri_id,card_number):
-    if card_number == None or card_number == "" or type(card_number) == str:
+    if card_number == None or card_number == "" or type(card_number) == str or "card_number" == None:
         return get_anka_result('Kart numarasini dogru giriniz.',False,None)
     else:
         musterinin_kredi_karti_bu_mu_result = musterinin_kredi_karti_bu_mu(musteri_id,card_number)
@@ -468,7 +469,9 @@ def odeme_kart_bakiye_guncellemesi(musteri_id,credi_card_number,musteri_sepet_tu
         if card_balance >= musteri_sepet_tutari:
             yeni_bakiye = card_balance - musteri_sepet_tutari
 
-            kredi_karti_bakiye_guncelle_query = "Update card_information set card_balance = %s"
+            #Burdaki sorguyu gözden geçirmeyi unutma...
+
+            kredi_karti_bakiye_guncelle_query = "Update card_information set card_balance = ? where card_number = ?"
 
             kredi_karti_bakiye_guncelle_result = g.cursor.execute(kredi_karti_bakiye_guncelle_query,(yeni_bakiye,))
 
