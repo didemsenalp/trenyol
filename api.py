@@ -297,7 +297,7 @@ def sepeti_goruntule():
             musterinin_sepeti_var_mi_result = musterinin_sepeti_var_mi(musteri_id)
             if musterinin_sepeti_var_mi_result["success"] == True:
                 musteri_sepet_id = musterinin_sepeti_var_mi_result["data"]
-                musterinin_sepetteki_urunlerini_getir_result =musterinin_sepetteki_urunlerini_getir(musteri_sepet_id)
+                musterinin_sepetteki_urunlerini_getir_result = musterinin_sepetteki_urunlerini_getir(musteri_id,musteri_sepet_id)
                 if musterinin_sepetteki_urunlerini_getir_result["success"] == True:
                     return musterinin_sepetteki_urunlerini_getir_result
                 else:
@@ -312,7 +312,7 @@ def sepeti_goruntule():
 def musterinin_sepetteki_urunlerini_getir(musteri_id,sepet_id):
     query_sepetteki_urunleri_getir = "Select * From cart_item where musteri_id = %s AND cart_id = %s"
 
-    sepetteki_urunleri_getir_result = g.cursor.execute(query_sepetteki_urunleri_getir,(sepet_id,))
+    sepetteki_urunleri_getir_result = g.cursor.execute(query_sepetteki_urunleri_getir,(musteri_id,sepet_id,))
 
     cart_item = g.cursor.fetchall()
 
