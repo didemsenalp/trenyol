@@ -186,11 +186,11 @@ def katalog_urunleri_goruntule():
 def sepete_urun_ekle():
     token = request.headers.get('token')
     request_data = request.get_json()
-    product_id = request_data["product_id"]
-
     validate_token_result = validate_token(token)
     get_musterid_with_by_token_result = get_musterid_with_by_token(token)
-    validate_product_id_result = validate_product_id(product_id)
+    
+    validate_product_id_result = validate_product_id(request_data)
+    product_id = request_data["product_id"]
     urun_varmi_result = urun_varmi(product_id)
     musterinin_sepeti_var_mi_result = musterinin_sepeti_var_mi(musteri_id)
 
@@ -231,10 +231,10 @@ def validate_token(token):
         return get_anka_result("token degeri yanlis",False,None)
     return get_anka_result("token degeri dogru",True,None)   
 
-def validate_product_id(product_id):
-    if product_id == None or product_id == "" or type(product_id) == str:
+def validate_product_id(request_data):
+    if "product_id" not in request_data or request_data["product_id"] == None or request_data["product_id"] == "" or type(request_data["product_id"]) == str:
         return get_anka_result('Urun id yanlis',False,None)
-    return get_anka_result('Urun id dogru',True,product_id)
+    return get_anka_result('Urun id dogru',True,None)
 
 def urun_varmi(product_id):
 
