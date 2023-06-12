@@ -293,11 +293,18 @@ def sepet_olustur(musteri_id):
 
         #Yeni sepet oluştururken NoneType sıkıntısı var bak!!!
 
-        musteri_sepet_info = g.cursor.fetchone()
+        query_get_sepet_id = "Select * From cart where musteri_id = %s "
 
-        musteri_sepet_id = musteri_sepet_info["cart_id"]
-            
-        return get_anka_result('Musteriye sepet olusturuldu',True,musteri_sepet_id)
+        result_get_sepet_id = g.cursor.execute(query_get_sepet_id,(musteri_id,))
+
+        if result_get_sepet_id >0:
+            mysql.connection.commit()
+
+            musteri_sepet_info = g.cursor.fetchone()
+
+            musteri_sepet_id = musteri_sepet_info["cart_id"]
+                
+            return get_anka_result('Musteriye sepet olusturuldu',True,musteri_sepet_id)
     else: 
         return get_anka_result('Musteriye sepet olusturulamadi',False,None)
 
