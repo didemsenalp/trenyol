@@ -465,16 +465,13 @@ def odeme_kart_bakiye_guncellemesi(musteri_id,credi_card_number,musteri_sepet_tu
 
         credi_card_data = g.cursor.fetchone()
         card_balance = credi_card_data["card_balance"]
-        card_number = credi_card_data["card_number"]
 
         if card_balance >= musteri_sepet_tutari:
             yeni_bakiye = card_balance - musteri_sepet_tutari
 
-            #Burdaki sorguyu gözden geçirmeyi unutma...
+            kredi_karti_bakiye_guncelle_query = "UPDATE card_information SET card_balance = %s WHERE musteri_id = %s AND card_number = %s"
 
-            kredi_karti_bakiye_guncelle_query = "UPDATE card_information SET card_balance = %s WHERE musteri_id = %s"
-
-            kredi_karti_bakiye_guncelle_result = g.cursor.execute(kredi_karti_bakiye_guncelle_query,(yeni_bakiye,musteri_id))
+            kredi_karti_bakiye_guncelle_result = g.cursor.execute(kredi_karti_bakiye_guncelle_query,(yeni_bakiye,musteri_id,credi_card_number))
 
             if kredi_karti_bakiye_guncelle_result > 0 :
 
