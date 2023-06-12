@@ -186,20 +186,25 @@ def katalog_urunleri_goruntule():
 def sepete_urun_ekle():
     token = request.headers.get('token')
     request_data = request.get_json()
-    validate_token_result = validate_token(token)
-    get_musterid_with_by_token_result = get_musterid_with_by_token(token)
-    
-    validate_product_id_result = validate_product_id(request_data)
-    product_id = request_data["product_id"]
-    urun_varmi_result = urun_varmi(product_id)
-    musterinin_sepeti_var_mi_result = musterinin_sepeti_var_mi(musteri_id)
 
+    validate_token_result = validate_token(token)
     if validate_token_result["success"] == True:
+
+        get_musterid_with_by_token_result = get_musterid_with_by_token(token)
         if get_musterid_with_by_token_result["success"] == True:
-            musteri_id = get_musterid_with_by_token(token)["data"]
+
+            musteri_id = get_musterid_with_by_token_result["data"]
+            validate_product_id_result = validate_product_id(request_data)
+
             if validate_product_id_result["success"] == True:
+                product_id = request_data["product_id"]
+
+                urun_varmi_result = urun_varmi(product_id)
                 if urun_varmi_result["success"] == True:
+
+                    musterinin_sepeti_var_mi_result = musterinin_sepeti_var_mi(musteri_id)
                     if musterinin_sepeti_var_mi_result["success"] == True:
+
                         musteri_sepet_id= musterinin_sepeti_var_mi_result["data"]
                         sepete_urun_ekle_query = "Insert into cart_item(musteri_id,product_id,cart_id) VALUES(%s,%s,%s)"
                         sepete_urun_ekle_result = g.cursor.execute(sepete_urun_ekle_query,(musteri_id,product_id,musteri_sepet_id))
@@ -233,8 +238,8 @@ def validate_token(token):
 
 def validate_product_id(request_data):
     if "product_id" not in request_data or request_data["product_id"] == None or request_data["product_id"] == "" or type(request_data["product_id"]) == str:
-        return get_anka_result('Urun id yanlis',False,None)
-    return get_anka_result('Urun id dogru',True,None)
+        return get_anka_result('Urun id degeri yanlis girildi',False,None)
+    return get_anka_result('Urun id degeri dogru girildi',True,None)
 
 def urun_varmi(product_id):
 
@@ -472,7 +477,6 @@ def odeme_kart_bakiye_guncellemesi(musteri_id,credi_card_number,musteri_sepet_tu
                 return get_anka_result("Odeme yapildi",True,None)
         else:
             return get_anka_result("Odeme yapilamadi",False,None)
-
 
 
 
