@@ -290,16 +290,14 @@ def sepeti_goruntule():
     token = request.headers.get('token')
 
     validate_token_result = validate_token(token)
-    get_musterid_with_by_token_result = get_musterid_with_by_token(token)
-    musterinin_sepeti_var_mi_result = musterinin_sepeti_var_mi(musteri_id)
-    musterinin_sepetteki_urunlerini_getir_result =musterinin_sepetteki_urunlerini_getir(musteri_sepet_id)
-
-    
     if validate_token_result["success"] == True:
+        get_musterid_with_by_token_result = get_musterid_with_by_token(token)
         if get_musterid_with_by_token_result["success"] == True:
             musteri_id = get_musterid_with_by_token_result["data"]
+            musterinin_sepeti_var_mi_result = musterinin_sepeti_var_mi(musteri_id)
             if musterinin_sepeti_var_mi_result["success"] == True:
                 musteri_sepet_id = musterinin_sepeti_var_mi_result["data"]
+                musterinin_sepetteki_urunlerini_getir_result =musterinin_sepetteki_urunlerini_getir(musteri_sepet_id)
                 if musterinin_sepetteki_urunlerini_getir_result["success"] == True:
                     return musterinin_sepetteki_urunlerini_getir_result
                 else:
@@ -371,7 +369,7 @@ def kart_bilgisi_gir():
     
     token = request.headers.get('token')
     request_data = request.get_json()
-    credi_card_number = request_data["card_number"]
+    
     
     
     validate_token_result = validate_token(token)
@@ -379,26 +377,27 @@ def kart_bilgisi_gir():
         get_musterid_with_by_token_result = get_musterid_with_by_token(token)
         if get_musterid_with_by_token_result["success"] == True:
             musteri_id = get_musterid_with_by_token_result["data"]
-            validate_card_number_and_balance_result = validate_card_number_and_balance(musteri_id,credi_card_number)
-            if validate_card_number_and_balance_result["success"] == True:
-                return validate_card_number_and_balance_result
+            validate_card_number_result = validate_card_number(request_data)
+            if validate_card_number_result["success"] == True:
+                credi_card_number = request_data["card_number"]
+                musterinin_kredi_karti_bu_mu_result = musterinin_kredi_karti_bu_mu(musteri_id,credi_card_number)
+                if musterinin_kredi_karti_bu_mu_result["success"] == True:
+                    return musterinin_kredi_karti_bu_mu_result
+                else:
+                    kredi_kart_bilgileri_kaydet_result = kredi_kart_bilgileri_kaydet(musteri_id,credi_card_number)
+                    return kredi_kart_bilgileri_kaydet_result
             else:
-                kredi_kart_bilgileri_kaydet_result = kredi_kart_bilgileri_kaydet(musteri_id,credi_card_number)
-                return kredi_kart_bilgileri_kaydet_result
+                return validate_card_number_result        
         else:
             return get_musterid_with_by_token_result
     else:
         return validate_token_result
  
-def validate_card_number_and_balance(musteri_id,card_number):
-    if card_number == None or card_number == "" or type(card_number) == str or "card_number" == None:
+def validate_card_number(request_data):
+    if "card_number" not in request_data or request_data["card_number"] == None or request_data["card_number"] == "" or type(request_data["card_number"]) == str or "card_number" == None:
         return get_anka_result('Kart numarasini dogru giriniz.',False,None)
     else:
-        musterinin_kredi_karti_bu_mu_result = musterinin_kredi_karti_bu_mu(musteri_id,card_number)
-        if musterinin_kredi_karti_bu_mu_result["success"] == True:
-            return musterinin_kredi_karti_bu_mu_result
-        else:
-            return musterinin_kredi_karti_bu_mu_result
+        return get_anka_result('Kart numarasini dogru girildi',True,request_data["card_number"])
 
 def musterinin_kredi_karti_bu_mu(musteri_id,credi_card_number):
     musterinin_kayitli_karti_bu_mu_query = "Select * From card_information where musteri_id = %s AND card_number = %s"
@@ -429,23 +428,27 @@ def kredi_kart_bilgileri_kaydet(musteri_id,credi_card_number):
 def odeme_yap():
     token = request.headers.get('token')
     request_data = request.get_json()
-    credi_card_number = request_data["card_number"]
+    
 
     validate_token_result = validate_token(token)
     if validate_token_result["success"] == True:
         get_musterid_with_by_token_result = get_musterid_with_by_token(token)
         if get_musterid_with_by_token_result["success"] == True:
             musteri_id = get_musterid_with_by_token(token)["data"]
-            validate_card_number_and_balance_result = validate_card_number_and_balance(musteri_id,credi_card_number)
-            if validate_card_number_and_balance_result["success"] == True:
-                credi_card_number = validate_card_number_and_balance_result["data"]
-                musterinin_sepet_tutarini_getir_result = musterinin_sepet_tutarini_getir(musteri_id)
-                musteri_sepet_tutari = musterinin_sepet_tutarini_getir_result["data"]
-                odeme_kart_bakiye_guncellemesi_result = odeme_kart_bakiye_guncellemesi(musteri_id,credi_card_number,musteri_sepet_tutari)
+            validate_card_number_result = validate_card_number(request_data)
+            if validate_card_number_result["success"] == True:
+                credi_card_number = request_data["card_number"]
+                musterinin_kredi_karti_bu_mu_result = musterinin_kredi_karti_bu_mu(musteri_id,credi_card_number)
+                if musterinin_kredi_karti_bu_mu_result["success"] == True:
+                    musterinin_sepet_tutarini_getir_result = musterinin_sepet_tutarini_getir(musteri_id)
+                    musteri_sepet_tutari = musterinin_sepet_tutarini_getir_result["data"]
+                    odeme_kart_bakiye_guncellemesi_result = odeme_kart_bakiye_guncellemesi(musteri_id,credi_card_number,musteri_sepet_tutari)
 
-                return odeme_kart_bakiye_guncellemesi_result
+                    return odeme_kart_bakiye_guncellemesi_result
+                else:
+                    return musterinin_kredi_karti_bu_mu_result
             else:
-                return validate_card_number_and_balance_result
+                return validate_card_number_result
         else:
             return get_musterid_with_by_token_result
     else:
