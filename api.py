@@ -2,8 +2,9 @@ from flask import Flask,request,jsonify,json
 from flask_mysqldb import MySQL
 from passlib.hash import sha256_crypt
 import random
-from flask import request,g
+from flask import g
 import uuid
+import requests
 
 app = Flask(__name__)
 
@@ -126,11 +127,11 @@ def check_email(register_email):
 @app.route("/GirisYapApi",methods = ["POST"])
 def giris_yap_api():
     request_data = request.get_json()
-    entered_email = request_data["email"]
-    entered_password = request_data["password"]
-
-    validate_giris_yap_inputları_result = validate_giris_yap_inputları(entered_email,entered_password)
+    
+    validate_giris_yap_inputları_result = validate_giris_yap_inputları(request_data)
     if validate_giris_yap_inputları_result["success"] == True:
+        entered_email = request_data["email"]
+        entered_password = request_data["password"]
         check_mail_password_result = check_email_and_password(entered_email,entered_password)
         if check_mail_password_result["success"] == True:
             return check_mail_password_result
@@ -139,12 +140,11 @@ def giris_yap_api():
     else:
         return validate_giris_yap_inputları_result
     
-def validate_giris_yap_inputları(email,password):
-    if email == None or email == "":
-        return get_anka_result("Eposta adresi bos",False,None)
-    if password == None or password == "":
-        return get_anka_result("Parola bos",False,None)
-    return get_anka_result("Degerler dogru",True,None)
+def validate_giris_yap_inputları(request_data):
+    if "email" not in request_data or "password" not in request_data or request_data["email"] == "" or request_data["email"] == None or request_data["password"] == "" or request_data["password"] == None:
+        return get_anka_result('Degerler yanlis girildi.',False,None)
+    return get_anka_result('Degerler dogru girildi.',True,None)
+
     
 def get_musterid_with_by_token(token):
     query_token = "Select * From users where token = %s"
