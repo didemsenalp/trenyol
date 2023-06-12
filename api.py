@@ -50,26 +50,23 @@ def check_token(token):
 @app.route("/UyeOlApi",methods = ["POST"])
 def uye_ol_api():
     request_data = request.get_json()
-    register_name = request_data["name"]
-    register_email = request_data["email"]
-    register_username = request_data["username"]
-    register_password = request_data["password"]
-
-    validate_uye_ol_result = validate_uye_ol(register_name,register_email,register_username,register_password)
-    check_email_result = check_email(register_email)
-    check_token_result = check_token(token)
-    uye_ol_result = uye_ol(register_name,register_email,register_username,register_password,token,gu_id)
-
-
+    
+    validate_uye_ol_result = validate_uye_ol(request_data)
     if validate_uye_ol_result["success"] == True:
+        register_name = request_data["name"]
+        register_email = request_data["email"]
+        register_username = request_data["username"]
+        register_password = request_data["password"]
+        check_email_result = check_email(register_email)
         if check_email_result["success"] == True:
 
             token = token_olustur()
+            check_token_result = check_token(token)
 
             if check_token_result["success"] == True:
 
                 gu_id = gu_id_olustur()
-                
+                uye_ol_result = uye_ol(register_name,register_email,register_username,register_password,token,gu_id)
                 if uye_ol_result["success"] == True:
 
                     return uye_ol_result
@@ -82,21 +79,16 @@ def uye_ol_api():
     else:
         return validate_uye_ol_result
 
-def validate_uye_ol(name,email,username,password):
-    request_data = request.get_json()
-    name = request_data["name"]
-    email = request_data["email"]
-    username = request_data["username"]
-    password = request_data["password"]
+def validate_uye_ol(request_data):
 
-    if name == None or name == "" or type(name) == int:
-        return get_anka_result("isim bos",False,None)
-    if email == None or email == "" or type(email) == int:
-        return get_anka_result("eposta adresi bos",False,None)
-    if username == None or username == "" or type(username) == int:
-        return get_anka_result("username bos",False,None)
-    if password == None or password == "":
-        return get_anka_result("parola bos",False,None)
+    if "name" not in request_data or request_data["name"] == None or request_data["name"] == "" or type(request_data["name"]) == int:
+        return get_anka_result("isim degeri yanlis girildi",False,None)
+    if "email" not in request_data or request_data["email"] == None or request_data["email"] == "" or type(request_data["email"]) == int:
+        return get_anka_result("eposta adresi degeri yanlis girildi",False,None)
+    if "username" not in request_data or request_data["username"] == None or request_data["username"] == "" or type(request_data["username"]) == int:
+        return get_anka_result("username degeri yanlis girildi",False,None)
+    if "password" not in request_data or request_data["password"] == None or request_data["password"] == "":
+        return get_anka_result("parola degeri yanlis girildi",False,None)
     return get_anka_result("Tüm degerler dogru girildi",True,None)
 
 def uye_ol(register_name,register_email,register_username,register_password,token,gu_id):
