@@ -4,7 +4,6 @@ from passlib.hash import sha256_crypt
 import random
 from flask import g
 import uuid
-import requests
 
 app = Flask(__name__)
 
@@ -36,6 +35,15 @@ def gu_id_olustur():
     gu_id = uuid.uuid4()
     return gu_id
 
+def check_musteri_id(musteri_id):
+    check_user_with_musteri_id_query = "Select * From users where token = %s"
+    check_user_with_musteri_id_result = g.cursor.execute(check_user_with_musteri_id_query,(musteri_id,))
+    if check_user_with_musteri_id_result == 0:
+        return get_anka_result("musteri id kayitli degil",True,None)
+        
+    else:
+        return get_anka_result("musteri id kayitli",False,musteri_id)
+
 def check_token(token):
     check_user_with_token_query = "Select * From users where token = %s"
     check_user_with_token_result = g.cursor.execute(check_user_with_token_query,(token,))
@@ -66,12 +74,16 @@ def uye_ol_api():
             if check_token_result["success"] == True:
 
                 gu_id = gu_id_olustur()
-                uye_ol_result = uye_ol(register_name,register_email,register_username,register_password,token,gu_id)
-                if uye_ol_result["success"] == True:
+                check_musteri_id_result = check_musteri_id(gu_id)
+                if check_musteri_id_result["success"] == True:
+                    uye_ol_result = uye_ol(register_name,register_email,register_username,register_password,token,gu_id)
+                    if uye_ol_result["success"] == True:
 
-                    return uye_ol_result
+                        return uye_ol_result
+                    else:
+                        return uye_ol_result
                 else:
-                    return uye_ol_result
+                    return check_musteri_id_result
             else:
                 return check_token_result
         else:
@@ -120,8 +132,8 @@ def check_email(register_email):
 def giris_yap_api():
     request_data = request.get_json()
     
-    validate_giris_yap_inputları_result = validate_giris_yap_inputları(request_data)
-    if validate_giris_yap_inputları_result["success"] == True:
+    validate_giris_yap_result = validate_giris_yap(request_data)
+    if validate_giris_yap_result["success"] == True:
         entered_email = request_data["email"]
         entered_password = request_data["password"]
         check_mail_password_result = check_email_and_password(entered_email,entered_password)
@@ -130,10 +142,10 @@ def giris_yap_api():
         else:
             return check_mail_password_result
     else:
-        return validate_giris_yap_inputları_result
+        return validate_giris_yap_result
     
-def validate_giris_yap_inputları(request_data):
-    if "email" not in request_data or "password" not in request_data or request_data["email"] == "" or request_data["email"] == None or request_data["password"] == "" or request_data["password"] == None:
+def validate_giris_yap(request_data):
+    if "email" not in request_data or "password" not in request_data or request_data["email"] == "" or request_data["password"] == "":
         return get_anka_result('Degerler yanlis girildi.',False,None)
     return get_anka_result('Degerler dogru girildi.',True,None)
 
@@ -230,14 +242,16 @@ def sepete_urun_ekle():
             return get_musterid_with_by_token_result
     else:
         return validate_token_result
-    
+
+#Token client ın girdiği bir data değil ama string/int kontrolü yapmak için yazdım.
+
 def validate_token(token):
-    if token == None or token == "":
+    if type(token) == int:
         return get_anka_result("token degeri yanlis",False,None)
     return get_anka_result("token degeri dogru",True,None)   
 
 def validate_product_id(request_data):
-    if "product_id" not in request_data or request_data["product_id"] == None or request_data["product_id"] == "" or type(request_data["product_id"]) == str:
+    if "product_id" not in request_data or request_data["product_id"] == "" or type(request_data["product_id"]) == str:
         return get_anka_result('Urun id degeri yanlis girildi',False,None)
     return get_anka_result('Urun id degeri dogru girildi',True,None)
 
@@ -318,7 +332,7 @@ def musterinin_sepetteki_urunlerini_getir(musteri_id,sepet_id):
 
     if sepetteki_urunleri_getir_result > 0:
 
-        sepet_tutari = musterinin_sepet_tutarini_getir(musteri_id)["data"]
+        sepet_tutari = musterinin_sepet_tutarini_getir(musteri_id,sepet_id)["data"]
 
         return get_anka_result('Sepetteki urunler goruntulendi',True,["urunler:",cart_item,["sepet_tutari:",sepet_tutari]])
         
@@ -326,10 +340,10 @@ def musterinin_sepetteki_urunlerini_getir(musteri_id,sepet_id):
         
         return get_anka_result('Sepette urun bulunamadi',False,None)
     
-def musterinin_sepet_tutarini_getir(musteri_id):
-    query_musteri_sepeti = "Select * From cart_item where musteri_id = %s"
+def musterinin_sepet_tutarini_getir(musteri_id,sepet_id):
+    query_musteri_sepeti = "Select * From cart_item where musteri_id = %s AND cart_id = %s"
 
-    result_musteri_sepeti = g.cursor.execute(query_musteri_sepeti,(musteri_id,))
+    result_musteri_sepeti = g.cursor.execute(query_musteri_sepeti,(musteri_id,sepet_id))
 
     if result_musteri_sepeti > 0 :
 
@@ -394,7 +408,7 @@ def kart_bilgisi_gir():
         return validate_token_result
  
 def validate_card_number(request_data):
-    if "card_number" not in request_data or request_data["card_number"] == None or request_data["card_number"] == "" or type(request_data["card_number"]) == str or "card_number" == None:
+    if "card_number" not in request_data or request_data["card_number"] == "" or type(request_data["card_number"]) == str:
         return get_anka_result('Kart numarasini dogru giriniz.',False,None)
     else:
         return get_anka_result('Kart numarasini dogru girildi',True,request_data["card_number"])
