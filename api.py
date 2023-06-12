@@ -291,6 +291,8 @@ def sepet_olustur(musteri_id):
     if sepet_olustur_result >0:
         mysql.connection.commit()
 
+        #Yeni sepet oluştururken NoneType sıkıntısı var bak!!!
+
         musteri_sepet_info = g.cursor.fetchone()
 
         musteri_sepet_id = musteri_sepet_info["cart_id"]
