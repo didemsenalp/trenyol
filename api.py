@@ -33,7 +33,8 @@ def token_olustur():
 
 def gu_id_olustur():
     gu_id = uuid.uuid4()
-    return gu_id
+    print(gu_id)
+    return f"{gu_id}"
 
 def check_musteri_id(musteri_id):
     check_user_with_musteri_id_query = "Select * From users where token = %s"
@@ -358,7 +359,12 @@ def musterinin_sepetteki_urunlerini_getir(musteri_id,sepet_id):
 
         sepet_tutari = musterinin_sepet_tutarini_getir(musteri_id)["data"]
 
-        return get_anka_result('Sepetteki urunler goruntulendi',True,["urunler:",cart_item,["sepet_tutari:",sepet_tutari]])
+        sepettekiUrunlerResult = {
+            "urunler": cart_item,
+            "sepet_tutari": sepet_tutari
+        }
+
+        return get_anka_result('Sepetteki urunler goruntulendi',True, sepettekiUrunlerResult)
         
     else:
         
@@ -518,7 +524,7 @@ def odeme_kart_bakiye_guncellemesi(musteri_id,credi_card_number,musteri_sepet_tu
 
                 return get_anka_result("Odeme yapildi",True,None)
         else:
-            return get_anka_result("Odeme yapilamadi",False,None)
+            return get_anka_result(f"Odeme yapilamadi. Bakiye: {card_balance}",False,None)
 
 
 
