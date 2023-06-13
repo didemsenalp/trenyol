@@ -490,20 +490,25 @@ def odeme_yap():
                 musterinin_kredi_karti_bu_mu_result = musterinin_kredi_karti_bu_mu(musteri_id,credi_card_number)
                 if musterinin_kredi_karti_bu_mu_result["success"] == True:
                     musterinin_sepet_tutarini_getir_result = musterinin_sepet_tutarini_getir(musteri_id)
-                    musteri_sepet_tutari = musterinin_sepet_tutarini_getir_result["data"]
-                    odeme_kart_bakiye_guncellemesi_result = odeme_kart_bakiye_guncellemesi(musteri_id,credi_card_number,musteri_sepet_tutari)
-                    if odeme_kart_bakiye_guncellemesi_result["success"] == True:
-                        sepetteki_urunleri_sil_result = sepetteki_urunleri_sil(musteri_id)
-                        if sepetteki_urunleri_sil_result["success"] == True:
+                    if musterinin_sepet_tutarini_getir_result["success"] == True:
+                        musteri_sepet_tutari = musterinin_sepet_tutarini_getir_result["data"]
+                        odeme_kart_bakiye_guncellemesi_result = odeme_kart_bakiye_guncellemesi(musteri_id,credi_card_number,musteri_sepet_tutari)
+                        if odeme_kart_bakiye_guncellemesi_result["success"] == True:
                             musteri_sepet_id = sepet_id_getir(musteri_id)["data"]
                             musterinin_sepetteki_urunleri = musterinin_sepetteki_urunlerini_getir(musteri_id,musteri_sepet_id)["data"]
+                            
                             musterinin_siparisini_siparis_tablosuna_ekle_result = musterinin_siparisini_siparis_tablosuna_ekle(musteri_id,musterinin_sepetteki_urunleri,musteri_sepet_tutari)
-
-                            return musterinin_siparisini_siparis_tablosuna_ekle_result
+                            if musterinin_siparisini_siparis_tablosuna_ekle_result["success"] == True:
+                                sepetteki_urunleri_sil_result = sepetteki_urunleri_sil(musteri_id)
+                                
+                                return sepetteki_urunleri_sil_result
+                            
+                            else:
+                                return musterinin_siparisini_siparis_tablosuna_ekle_result
                         else:
-                            return sepetteki_urunleri_sil_result
+                            return odeme_kart_bakiye_guncellemesi_result
                     else:
-                        return odeme_kart_bakiye_guncellemesi_result
+                        return musterinin_sepet_tutarini_getir_result
                 else:
                     return musterinin_kredi_karti_bu_mu_result
             else:
