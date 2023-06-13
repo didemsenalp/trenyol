@@ -459,7 +459,7 @@ def kredi_kart_bilgileri_kaydet(musteri_id,credi_card_number):
     mysql.connection.commit()
 
     if kart_kaydet_query_result > 0:
-        return get_anka_result('Kart bilgileri kaydedildi',True,None)
+        return get_anka_result('Kart bilgileri kaydedildi',True,credi_card_number)
     else:
         return get_anka_result('Kart bilgileri kaydedilemedi',False,None)
 
