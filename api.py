@@ -444,7 +444,7 @@ def musterinin_kredi_karti_bu_mu(musteri_id,credi_card_number):
     musterinin_kayitli_karti_bu_mu_result = g.cursor.execute(musterinin_kayitli_karti_bu_mu_query,(musteri_id,credi_card_number))
     if musterinin_kayitli_karti_bu_mu_result > 0 :
         
-        return get_anka_result('Kullanicinin karti bu',True,credi_card_number)
+        return get_anka_result('Kullanicinin karti bu',True,None)
     else:
         return get_anka_result('Kullanicinin kayitli karti bu degil',False,None)
 
