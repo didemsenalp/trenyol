@@ -4,6 +4,7 @@ from passlib.hash import sha256_crypt
 import random
 from flask import g
 import uuid
+import re
 
 app = Flask(__name__)
 
@@ -53,8 +54,6 @@ def check_token(token):
         
     else:
         return get_anka_result("token kayitli",False,token)
-    
-  
 
 @app.route("/UyeOlApi",methods = ["POST"])
 def uye_ol_api():
@@ -96,8 +95,8 @@ def validate_uye_ol(request_data):
 
     if "name" not in request_data or request_data["name"] == None or request_data["name"] == "" or type(request_data["name"]) == int:
         return get_anka_result("isim degeri yanlis girildi",False,None)
-    eposta_karakter_kontrol_result = eposta_karakter_kontrol(request_data["email"])
-    if "email" not in request_data or request_data["email"] == None or request_data["email"] == "" or type(request_data["email"]) == int or eposta_karakter_kontrol_result == False:
+    isValid_result = isValid(request_data["email"])
+    if "email" not in request_data or request_data["email"] == None or request_data["email"] == "" or type(request_data["email"]) == int or isValid_result["success"] == False:
         return get_anka_result("eposta adresi degeri yanlis girildi",False,None)
     if "username" not in request_data or request_data["username"] == None or request_data["username"] == "" or type(request_data["username"]) == int:
         return get_anka_result("username degeri yanlis girildi",False,None)
@@ -129,7 +128,6 @@ def check_email(register_email):
     else:
         return get_anka_result("eposta adresi sisteme kayitli.",False,register_email)
 
-
 @app.route("/GirisYapApi",methods = ["POST"])
 def giris_yap_api():
     request_data = request.get_json()
@@ -146,24 +144,19 @@ def giris_yap_api():
     else:
         return validate_giris_yap_result
 
+regex = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
 
-def eposta_karakter_kontrol(str):
-  count = 0
-  for ch in str:
-    if ch == '@':
-      count = count + 1
-
-  if count == 1:
-    return True
-  else:
-    return False
-
+def isValid(email):
+    if re.fullmatch(regex, email):
+      return get_anka_result('Eposta adresi dogru girildi',True,None)
+    else:
+      return get_anka_result('Gecerli bir eposta adresi giriniz.',False,None)
 
 def validate_giris_yap(request_data):
     if "email" not in request_data or "password" not in request_data or request_data["email"] == "" or request_data["password"] == "" :
         return get_anka_result('Degerler yanlis girildi.',False,None)
-    eposta_karakter_kontrol_result = eposta_karakter_kontrol(request_data["email"])
-    if eposta_karakter_kontrol_result == False:
+    isValid_result = isValid(request_data["email"])
+    if isValid_result["success"] == False:
         return get_anka_result('Gecerli bir eposta adresi giriniz.',False,None)
     return get_anka_result('Degerler dogru girildi.',True,None)
 
@@ -261,17 +254,6 @@ def sepete_urun_ekle():
     else:
         return validate_token_result
 
-def sepete_urun_ekle(musteri_id,product_id,musteri_sepet_id):
-    sepete_urun_ekle_query = "Insert into cart_item(musteri_id,product_id,cart_id) VALUES(%s,%s,%s)"
-    sepete_urun_ekle_result = g.cursor.execute(sepete_urun_ekle_query,(musteri_id,product_id,musteri_sepet_id))
-    if sepete_urun_ekle_result >0:
-        mysql.connection.commit()
-
-        return get_anka_result('Urun sepete eklendi',True,None)
-    else:
-        return get_anka_result('Urun sepete eklenemedi',False,None)
-
-
 #Token client ın girdiği bir data değil ama int kontrolü yapmak için yazdım.
 
 def validate_token(token):
@@ -325,8 +307,6 @@ def sepet_id_getir(musteri_id):
         return get_anka_result('Musteriye sepet_id getirildi.',True,musteri_sepet_id)
     else:
         return get_anka_result('Musteriye sepet_id getirme basarisiz.',False,None)
-        
-
     
 def sepet_olustur(musteri_id):
     
@@ -341,6 +321,16 @@ def sepet_olustur(musteri_id):
     else: 
         return get_anka_result('Musteriye sepet olusturulamadi',False,None)
 
+def sepete_urun_ekle(musteri_id,product_id,musteri_sepet_id):
+    sepete_urun_ekle_query = "Insert into cart_item(musteri_id,product_id,cart_id) VALUES(%s,%s,%s)"
+    sepete_urun_ekle_result = g.cursor.execute(sepete_urun_ekle_query,(musteri_id,product_id,musteri_sepet_id))
+    if sepete_urun_ekle_result >0:
+        mysql.connection.commit()
+
+        return get_anka_result('Urun sepete eklendi',True,None)
+    else:
+        return get_anka_result('Urun sepete eklenemedi',False,None)
+    
 @app.route("/SepetiGoruntuleApi",methods = ["GET"])
 def sepeti_goruntule():
     token = request.headers.get('token')
@@ -376,12 +366,12 @@ def musterinin_sepetteki_urunlerini_getir(musteri_id,sepet_id):
 
         sepet_tutari = musterinin_sepet_tutarini_getir(musteri_id)["data"]
 
-        sepettekiUrunlerResult = {
+        sepetteki_urunler_ve_sepet_tutari = {
             "urunler": cart_item,
             "sepet_tutari": sepet_tutari
         }
 
-        return get_anka_result('Sepetteki urunler goruntulendi',True, sepettekiUrunlerResult)
+        return get_anka_result('Sepetteki urunler goruntulendi',True, sepetteki_urunler_ve_sepet_tutari)
         
     else:
         
@@ -515,10 +505,7 @@ def odeme_yap():
             return get_musterid_with_by_token_result
     else:
         return validate_token_result
-
-    
-    
-
+  
 def odeme_kart_bakiye_guncellemesi(musteri_id,credi_card_number,musteri_sepet_tutari):
         kredi_karti_bakiye_query = "Select * From card_information where musteri_id = %s AND card_number = %s"
 
@@ -542,7 +529,5 @@ def odeme_kart_bakiye_guncellemesi(musteri_id,credi_card_number,musteri_sepet_tu
                 return get_anka_result("Odeme yapildi",True,None)
         else:
             return get_anka_result(f"Odeme yapilamadi. Bakiye: {card_balance}",False,None)
-
-
 
 app.run(debug=True)
