@@ -236,22 +236,22 @@ def sepete_urun_ekle():
                     if musterinin_sepeti_var_mi_result["success"] == True:
 
                         musteri_sepet_id= musterinin_sepeti_var_mi_result["data"]
-                        sepete_urun_ekle_query = "Insert into cart_item(musteri_id,product_id,cart_id) VALUES(%s,%s,%s)"
-                        sepete_urun_ekle_result = g.cursor.execute(sepete_urun_ekle_query,(musteri_id,product_id,musteri_sepet_id))
-                        if sepete_urun_ekle_result >0:
-                            mysql.connection.commit()
-                            return get_anka_result('Urun sepete eklendi',True,musteri_sepet_id)
-                        else:
-                            return get_anka_result('Urun sepete eklenemedi',False,None)
+                        
+                        sepete_urun_ekle_result = sepete_urun_ekle(musteri_id,product_id,musteri_sepet_id)
+
+                        return sepete_urun_ekle_result
+                            
                     else:
-                        musteri_sepet_id = sepet_olustur(musteri_id)["data"]
-                        sepete_urun_ekle_query = "Insert into cart_item(musteri_id,product_id) VALUES(%s,%s)"
-                        sepete_urun_ekle_result = g.cursor.execute(sepete_urun_ekle_query,(musteri_id,product_id))
-                        if sepete_urun_ekle_result >0:
-                            mysql.connection.commit()
-                            return get_anka_result('Urun sepete eklendi',True,musteri_sepet_id)
+                        sepet_olustur_result = sepet_olustur(musteri_id)
+                        if sepet_olustur_result["success"] == True:
+
+                            musteri_sepet_id = sepet_id_getir(musteri_id)["data"]
+
+                            sepete_urun_ekle_result = sepete_urun_ekle(musteri_id,product_id,musteri_sepet_id)
+
+                            return sepete_urun_ekle_result
                         else:
-                            return get_anka_result('Urun sepete eklenemedi',False,None)
+                            return sepet_olustur_result
                 else:
                     return urun_varmi_result
             else:
@@ -260,6 +260,17 @@ def sepete_urun_ekle():
             return get_musterid_with_by_token_result
     else:
         return validate_token_result
+
+def sepete_urun_ekle(musteri_id,product_id,musteri_sepet_id):
+    sepete_urun_ekle_query = "Insert into cart_item(musteri_id,product_id,cart_id) VALUES(%s,%s,%s)"
+    sepete_urun_ekle_result = g.cursor.execute(sepete_urun_ekle_query,(musteri_id,product_id,musteri_sepet_id))
+    if sepete_urun_ekle_result >0:
+        mysql.connection.commit()
+
+        return get_anka_result('Urun sepete eklendi',True,None)
+    else:
+        return get_anka_result('Urun sepete eklenemedi',False,None)
+
 
 #Token client ın girdiği bir data değil ama int kontrolü yapmak için yazdım.
 
@@ -300,6 +311,23 @@ def musterinin_sepeti_var_mi(musteri_id):
     else:
         return get_anka_result('Musterinin sepeti yok',False,None)
     
+def sepet_id_getir(musteri_id):
+    query_get_sepet_id = "Select * From cart where musteri_id = %s "
+
+    result_get_sepet_id = g.cursor.execute(query_get_sepet_id,(musteri_id,))
+
+    if result_get_sepet_id >0:
+
+        musteri_sepet_info = g.cursor.fetchone()
+
+        musteri_sepet_id = musteri_sepet_info["cart_id"]
+
+        return get_anka_result('Musteriye sepet_id getirildi.',True,musteri_sepet_id)
+    else:
+        return get_anka_result('Musteriye sepet_id getirme basarisiz.',False,None)
+        
+
+    
 def sepet_olustur(musteri_id):
     
     query_sepet_olustur = "Insert into cart(musteri_id) VALUES(%s)"
@@ -308,19 +336,8 @@ def sepet_olustur(musteri_id):
 
     if sepet_olustur_result >0:
         mysql.connection.commit()
-
-        query_get_sepet_id = "Select * From cart where musteri_id = %s "
-
-        result_get_sepet_id = g.cursor.execute(query_get_sepet_id,(musteri_id,))
-
-        if result_get_sepet_id >0:
-            mysql.connection.commit()
-
-            musteri_sepet_info = g.cursor.fetchone()
-
-            musteri_sepet_id = musteri_sepet_info["cart_id"]
                 
-            return get_anka_result('Musteriye sepet olusturuldu',True,musteri_sepet_id)
+        return get_anka_result('Musteriye sepet olusturuldu',True,None)
     else: 
         return get_anka_result('Musteriye sepet olusturulamadi',False,None)
 
