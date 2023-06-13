@@ -143,10 +143,26 @@ def giris_yap_api():
             return check_mail_password_result
     else:
         return validate_giris_yap_result
-    
+
+
+def eposta_karakter_kontrol(str):
+  count = 0
+  for ch in str:
+    if ch == '@':
+      count = count + 1
+
+  if count == 1:
+    return True
+  else:
+    return False
+
+
 def validate_giris_yap(request_data):
-    if "email" not in request_data or "password" not in request_data or request_data["email"] == "" or request_data["password"] == "":
+    if "email" not in request_data or "password" not in request_data or request_data["email"] == "" or request_data["password"] == "" :
         return get_anka_result('Degerler yanlis girildi.',False,None)
+    eposta_karakter_kontrol_result = eposta_karakter_kontrol(request_data["email"])
+    if eposta_karakter_kontrol_result == False:
+        return get_anka_result('Gecerli bir eposta adresi giriniz.',False,None)
     return get_anka_result('Degerler dogru girildi.',True,None)
 
     
@@ -243,7 +259,7 @@ def sepete_urun_ekle():
     else:
         return validate_token_result
 
-#Token client ın girdiği bir data değil ama string/int kontrolü yapmak için yazdım.
+#Token client ın girdiği bir data değil ama int kontrolü yapmak için yazdım.
 
 def validate_token(token):
     if type(token) == int:
@@ -290,8 +306,6 @@ def sepet_olustur(musteri_id):
 
     if sepet_olustur_result >0:
         mysql.connection.commit()
-
-        #Yeni sepet oluştururken NoneType sıkıntısı var bak!!!
 
         query_get_sepet_id = "Select * From cart where musteri_id = %s "
 
@@ -341,7 +355,7 @@ def musterinin_sepetteki_urunlerini_getir(musteri_id,sepet_id):
 
     if sepetteki_urunleri_getir_result > 0:
 
-        sepet_tutari = musterinin_sepet_tutarini_getir(musteri_id,sepet_id)["data"]
+        sepet_tutari = musterinin_sepet_tutarini_getir(musteri_id)["data"]
 
         return get_anka_result('Sepetteki urunler goruntulendi',True,["urunler:",cart_item,["sepet_tutari:",sepet_tutari]])
         
@@ -349,10 +363,10 @@ def musterinin_sepetteki_urunlerini_getir(musteri_id,sepet_id):
         
         return get_anka_result('Sepette urun bulunamadi',False,None)
     
-def musterinin_sepet_tutarini_getir(musteri_id,sepet_id):
-    query_musteri_sepeti = "Select * From cart_item where musteri_id = %s AND cart_id = %s"
+def musterinin_sepet_tutarini_getir(musteri_id):
+    query_musteri_sepeti = "Select * From cart_item where musteri_id = %s"
 
-    result_musteri_sepeti = g.cursor.execute(query_musteri_sepeti,(musteri_id,sepet_id))
+    result_musteri_sepeti = g.cursor.execute(query_musteri_sepeti,(musteri_id,))
 
     if result_musteri_sepeti > 0 :
 
