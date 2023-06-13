@@ -95,7 +95,8 @@ def validate_uye_ol(request_data):
 
     if "name" not in request_data or request_data["name"] == None or request_data["name"] == "" or type(request_data["name"]) == int:
         return get_anka_result("isim degeri yanlis girildi",False,None)
-    if "email" not in request_data or request_data["email"] == None or request_data["email"] == "" or type(request_data["email"]) == int:
+    eposta_karakter_kontrol_result = eposta_karakter_kontrol(request_data["email"])
+    if "email" not in request_data or request_data["email"] == None or request_data["email"] == "" or type(request_data["email"]) == int or eposta_karakter_kontrol_result == False:
         return get_anka_result("eposta adresi degeri yanlis girildi",False,None)
     if "username" not in request_data or request_data["username"] == None or request_data["username"] == "" or type(request_data["username"]) == int:
         return get_anka_result("username degeri yanlis girildi",False,None)
@@ -431,10 +432,11 @@ def kart_bilgisi_gir():
         return validate_token_result
  
 def validate_card_number(request_data):
-    if "card_number" not in request_data or request_data["card_number"] == "" or type(request_data["card_number"]) == str:
+    if "card_number" not in request_data or request_data["card_number"] == "" or type(request_data["card_number"]) == str :
         return get_anka_result('Kart numarasini dogru giriniz.',False,None)
-    else:
-        return get_anka_result('Kart numarasini dogru girildi',True,request_data["card_number"])
+    if len(str(request_data["card_number"])) != 16:
+        return get_anka_result('16 haneli kart numarasini dogru giriniz.',False,None)
+    return get_anka_result('Kart numarasini dogru girildi',True,request_data["card_number"])
 
 def musterinin_kredi_karti_bu_mu(musteri_id,credi_card_number):
     musterinin_kayitli_karti_bu_mu_query = "Select * From card_information where musteri_id = %s AND card_number = %s"
