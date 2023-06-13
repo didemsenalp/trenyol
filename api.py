@@ -363,11 +363,13 @@ def musterinin_sepetteki_urunlerini_getir(musteri_id,sepet_id):
 
     sepetteki_urunleri_getir_result = g.cursor.execute(query_sepetteki_urunleri_getir,(musteri_id,sepet_id,))
 
-    cart_item = g.cursor.fetchall()
+    products_id_list = [item['product_id'] for item in g.cursor.fetchall()]
+
 
     if sepetteki_urunleri_getir_result > 0:
 
-        return get_anka_result('Sepetteki urunler goruntulendi',True, cart_item)
+
+        return get_anka_result('Sepetteki urunler goruntulendi',True, products_id_list)
         
     else:
         
@@ -411,7 +413,7 @@ def get_product_price(product_id):
     
     return get_anka_result("Urun fiyati bulunamadi",False,None)
 
-@app.route("/KartBilgisiGir",methods = ["GET"])
+@app.route("/KartBilgisiGirApi",methods = ["GET"])
 def kart_bilgisi_gir():
     
     token = request.headers.get('token')
@@ -473,7 +475,7 @@ def kredi_kart_bilgileri_kaydet(musteri_id,credi_card_number):
         return get_anka_result('Kart bilgileri kaydedilemedi',False,None)
 
 
-@app.route("/OdemeYap",methods = ["GET"])
+@app.route("/OdemeYapApi",methods = ["GET"])
 def odeme_yap():
     token = request.headers.get('token')
     request_data = request.get_json()
@@ -495,7 +497,7 @@ def odeme_yap():
                         odeme_kart_bakiye_guncellemesi_result = odeme_kart_bakiye_guncellemesi(musteri_id,credi_card_number,musteri_sepet_tutari)
                         if odeme_kart_bakiye_guncellemesi_result["success"] == True:
                             musteri_sepet_id = sepet_id_getir(musteri_id)["data"]
-                            musterinin_sepetteki_urunleri = musterinin_sepetteki_urunlerini_getir(musteri_id,musteri_sepet_id)["data"]
+                            musterinin_sepetteki_urunleri = str(musterinin_sepetteki_urunlerini_getir(musteri_id,musteri_sepet_id)["data"])
                             
                             musterinin_siparisini_siparis_tablosuna_ekle_result = musterinin_siparisini_siparis_tablosuna_ekle(musteri_id,musterinin_sepetteki_urunleri,musteri_sepet_tutari)
                             if musterinin_siparisini_siparis_tablosuna_ekle_result["success"] == True:
@@ -565,5 +567,10 @@ def musterinin_siparisini_siparis_tablosuna_ekle(musteri_id,cart_item,order_pric
         return get_anka_result('Siparis tablosuna siparisler eklendi',True,None)
     else:
         return get_anka_result('Siparis tablosuna siparisler ekleme basarisiz',False,None)
+
+@app.route("/SiparisiGoruntuleApi",methods = ["GET"])
+def siparisi_goruntule():
+    pass
+
 
 app.run(debug=True)
