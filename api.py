@@ -635,7 +635,7 @@ def siparisi_goruntule():
             for order_id in order_id_list:
                 siparisi_goruntule_result = siparisi_goruntule(order_id)["data"]
                 siparis.append(siparisi_goruntule_result)
-            return siparis
+            return get_anka_result("Siparisleriniz goruntulendi",True,siparis)
         else:
             return get_musterid_with_by_token_result
     else:
