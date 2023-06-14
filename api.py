@@ -500,15 +500,15 @@ def odeme_yap():
                             musterinin_siparisini_siparis_tablosuna_ekle_result = musterinin_siparisini_siparis_tablosuna_ekle(musteri_id,musteri_sepet_tutari)
                             if musterinin_siparisini_siparis_tablosuna_ekle_result["success"] == True:
 
-                                order_id_list = musteri_siparisinin_order_idsini_getir(musteri_id)["data"]
+                                order_id = musteri_siparisinin_order_idsini_getir(musteri_id)["data"][0]
+
                                 sepet_id = sepet_id_getir(musteri_id)["data"]
-                                for order_id in order_id_list:
-                                    product_id_list = musterinin_sepetteki_urunlerini_getir(musteri_id,sepet_id)["data"]
-                                    for product_id in product_id_list:
-                                        product_name = get_product_name_by_product_id(product_id)["data"]
-                                        product_price = get_product_price(product_id)["data"]
-                                    
-                                        musterinin_siparis_detayini_siparis_detay_tablosuna_ekle_result = musterinin_siparis_detayini_siparis_detay_tablosuna_ekle(order_id,product_name,product_price)
+                                product_id_list = musterinin_sepetteki_urunlerini_getir(musteri_id,sepet_id)["data"]
+                                for product_id in product_id_list:
+                                    product_name = get_product_name_by_product_id(product_id)["data"]
+                                    product_price = get_product_price(product_id)["data"]
+                                
+                                    musterinin_siparis_detayini_siparis_detay_tablosuna_ekle_result = musterinin_siparis_detayini_siparis_detay_tablosuna_ekle(order_id,product_name,product_price)
                                 if musterinin_siparis_detayini_siparis_detay_tablosuna_ekle_result["success"] == True:
                                     sepetteki_urunleri_sil_result = sepetteki_urunleri_sil(musteri_id)
                                     return sepetteki_urunleri_sil_result
@@ -608,7 +608,7 @@ def sepetteki_urunleri_sil(musteri_id):
         return get_anka_result('Sepet temizlenemedi',False,None)
 
 def musteri_siparisinin_order_idsini_getir(musteri_id):
-    query_get_order_id = "Select * From customer_orders where musteri_id = %s"
+    query_get_order_id = "Select * From customer_orders where musteri_id = %s ORDER BY order_id DESC"
 
     result_get_order_id = g.cursor.execute(query_get_order_id,(musteri_id,))
 
