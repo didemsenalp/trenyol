@@ -632,14 +632,18 @@ def siparisi_goruntule():
             musteri_id = get_musterid_with_by_token_result["data"]
             order_id_list = musteri_siparisinin_order_idsini_getir(musteri_id)["data"]
             siparis = []
-            for order_id in order_id_list:
-                siparisi_goruntule_result = siparisi_goruntule(order_id)["data"]
-                siparis.append(siparisi_goruntule_result)
-            return get_anka_result("Siparisleriniz goruntulendi",True,siparis)
+            siparis_listele_result = siparis_listele(siparis,order_id_list)
+            return siparis_listele_result
         else:
             return get_musterid_with_by_token_result
     else:
         return validate_token_result
+    
+def siparis_listele(siparis,order_id_list):
+    for order_id in order_id_list:
+        siparisi_goruntule_result = siparisi_goruntule(order_id)["data"]
+        siparis.append(siparisi_goruntule_result)
+    return get_anka_result("Siparisleriniz goruntulendi",True,siparis)
 
 def siparisi_goruntule(order_id):
     siparis_detay_tablosunu_goruntule_query = "Select * From customer_orders_item where order_id = %s"
