@@ -629,11 +629,15 @@ def siparisi_goruntule():
     if validate_token_result["success"] == True:
         get_musterid_with_by_token_result = get_musterid_with_by_token(token)
         if get_musterid_with_by_token_result["success"] == True:
-            musteri_id = get_musterid_with_by_token_result["data"]
-            order_id_list = musteri_siparisinin_order_idsini_getir(musteri_id)["data"]
-            siparis = []
-            siparis_listele_result = siparis_listele(siparis,order_id_list)
-            return siparis_listele_result
+            musterinin_sepeti_var_mi_result = musterinin_sepeti_var_mi(musteri_id)
+            if musterinin_sepeti_var_mi_result > 0:
+                musteri_id = get_musterid_with_by_token_result["data"]
+                order_id_list = musteri_siparisinin_order_idsini_getir(musteri_id)["data"]
+                siparis = []
+                siparis_listele_result = siparis_listele(siparis,order_id_list)
+                return siparis_listele_result
+            else:
+                return musterinin_sepeti_var_mi_result
         else:
             return get_musterid_with_by_token_result
     else:
